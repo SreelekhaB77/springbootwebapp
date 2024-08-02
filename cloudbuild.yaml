@@ -25,7 +25,7 @@ steps:
     - --zone=us-central1-f
 
 
-# Step 5: Ensure Java is installed on the VM, and restart the Java applica35.222.32.29tion
+# Step 5: Ensure Java is installed on the VM, and restart the Java application
 - id: "Restarting the service in VM"
   name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: 'bash'
