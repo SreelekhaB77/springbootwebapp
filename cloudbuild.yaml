@@ -1,0 +1,39 @@
+steps:
+# Step 1: Fetch source code from Cloud Storage
+- id: "Fetching source"
+  name: 'gcr.io/cloud-builders/gsutil'
+  args: ['cp', '-r', 'gs://bucket-0208/java/', '.']
+
+# Step 2: Build Artifact
+- id: "Building Artifact"
+  name: gcr.io/cloud-builders/mvn
+  entrypoint: bash
+  args:
+    - -c
+    - |
+      mvn -f /workspace/springbootwebapp/pom.xml clean install
+      mvn clean install
+
+# Step 3: Deploying into master VM
+- id: "Deploying into master VM"
+  name: gcr.io/cloud-builders/gcloud
+  args:
+    - compute
+    - scp
+    - target/spring-boot-web-0.0.1-SNAPSHOT.jar
+    - sree@instance-0208:/home/sree
+    - --zone=us-central1-f
+
+
+# Step 5: Ensure Java is installed on the VM, and restart the Java applica35.222.32.29tion
+- id: "Restarting the service in VM"
+  name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  args:
+      - -c
+      - |
+        gcloud compute ssh sree@instance-0208 --zone=us-central1-f --command="
+          sudo apt update -y && \
+          sudo apt install -y openjdk-17-jdk && \
+          kill -9 \$(ps -ef | grep 'java -jar /home/sree/spring-boot-web-0.0.1-SNAPSHOT.jar' | grep -v grep | awk '{print \$2}') || true && \
+          nohup java -jar /home/sree/spring-boot-web-0.0.1-SNAPSHOT.jar &"
